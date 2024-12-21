@@ -13,10 +13,15 @@ interface Photo {
 export default function GalleryPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login")
+      return
+    }
+
     async function fetchPhotos() {
       try {
         const response = await fetch("/api/photos")
@@ -29,8 +34,10 @@ export default function GalleryPage() {
       }
     }
 
-    fetchPhotos()
-  }, [])
+    if (status === "authenticated") {
+      fetchPhotos()
+    }
+  }, [status, router])
 
   const handleDownload = async (photoId: string) => {
     const response = await fetch(`/api/photos/${photoId}/download`)
