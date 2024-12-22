@@ -42,14 +42,17 @@ export default function UploadPage() {
       const response = await fetch("/api/photos/upload", {
         method: "POST",
         body: formData,
+        credentials: "include",
       })
 
       if (!response.ok) {
-        throw new Error("Upload failed")
+        const data = await response.json()
+        throw new Error(data.error || "Upload failed")
       }
 
       router.push("/gallery")
     } catch (error) {
+      console.error("Upload error:", error)
       setError(error instanceof Error ? error.message : "Upload failed")
     } finally {
       setUploading(false)
