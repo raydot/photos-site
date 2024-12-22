@@ -49,9 +49,14 @@ export default function UploadPage() {
         },
       })
 
+      console.log("Upload response status:", response.status) // Debug response
+      const responseData = await response.json()
+      console.log("Upload response data:", responseData) // Debug response
+
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Upload failed")
+        // const data = await response.json()
+        // throw new Error(data.error || "Upload failed")
+        console.log("Upload response data:", responseData) // Debug response data
       }
 
       router.push("/gallery")
