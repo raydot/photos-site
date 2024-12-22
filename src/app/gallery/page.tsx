@@ -13,7 +13,7 @@ interface Photo {
 export default function GalleryPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
-  const { data: session, status } = useSession()
+  const { status } = useSession() // Remove unused session variable
   const router = useRouter()
 
   useEffect(() => {

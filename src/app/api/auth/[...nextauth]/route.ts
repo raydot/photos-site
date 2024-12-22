@@ -36,7 +36,7 @@ const handler = NextAuth({
       return token
     },
     session: async ({ session, token }) => {
-      if (session.user) session.user.role = token.role as string
+      if (session.user) session.user.role = token.role as "visitor" | "uploader"
       return session
     },
   },
