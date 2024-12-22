@@ -1,5 +1,15 @@
 import { getServerSession } from "next-auth"
 import { NextRequest, NextResponse } from "next/server"
+import { PrismaClient } from "@prisma/client"
+import { v2 as cloudinary } from "cloudinary"
+
+const prisma = new PrismaClient()
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,33 +45,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File too large" }, { status: 400 })
     }
 
-    // const buffer = await file.arrayBuffer()
-    // const base64 = Buffer.from(buffer).toString("base64")
-    // const dataURI = `data:${file.type};base64,${base64}`
+    const buffer = await file.arrayBuffer()
+    const base64 = Buffer.from(buffer).toString("base64")
+    const dataURI = `data:${file.type};base64,${base64}`
 
-    // const result = await cloudinary.uploader.upload(dataURI, {
-    //   folder: "photos",
-    //   transformation: [
-    //     { width: 1920, height: 1080, crop: "limit" },
-    //     { quality: "auto" },
-    //   ],
-    // })
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: "photos",
+      transformation: [
+        { width: 1920, height: 1080, crop: "limit" },
+        { quality: "auto" },
+      ],
+    })
 
-    // const thumbnail = await cloudinary.uploader.upload(dataURI, {
-    //   folder: "thumbnails",
-    //   transformation: [
-    //     { width: 300, height: 300, crop: "fill" },
-    //     { quality: "auto" },
-    //   ],
-    // })
+    const thumbnail = await cloudinary.uploader.upload(dataURI, {
+      folder: "thumbnails",
+      transformation: [
+        { width: 300, height: 300, crop: "fill" },
+        { quality: "auto" },
+      ],
+    })
 
-    // const photo = await prisma.photo.create({
-    //   data: {
-    //     url: result.secure_url,
-    //     thumbnail: thumbnail.secure_url,
-    //     userId: session.user.id,
-    //   },
-    // })
+    const photo = await prisma.photo.create({
+      data: {
+        url: result.secure_url,
+        thumbnail: thumbnail.secure_url,
+        userId: session.user.id,
+      },
+    })
 
     return NextResponse.json(photo)
     // ********************************
