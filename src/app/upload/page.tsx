@@ -43,6 +43,10 @@ export default function UploadPage() {
         method: "POST",
         body: formData,
         credentials: "include",
+        headers: {
+          // Add auth related headers if needed
+          Accept: "application/json",
+        },
       })
 
       if (!response.ok) {
