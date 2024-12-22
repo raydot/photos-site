@@ -14,9 +14,16 @@ const prisma = new PrismaClient()
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession()
+    console.log("Upload attempt - Session:", session)
 
-    if (!session || session.user.role !== "uploader") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!session?.user) {
+      console.log("No session found")
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    }
+
+    if (session.user.role !== "uploader") {
+      console.log("Invalid role:", session.user.role)
+      return NextResponse.json({ error: "Not authorized" }, { status: 401 })
     }
 
     const formData = await request.formData()
@@ -67,9 +74,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(photo)
   } catch (error) {
     console.error("Error uploading photo:", error)
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Upload failed, man" }, { status: 500 })
   }
 }
