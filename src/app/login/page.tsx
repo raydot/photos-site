@@ -4,7 +4,6 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
-  const [role, setRole] = useState<"visitor" | "uploader">("visitor")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -16,8 +15,8 @@ export default function LoginPage() {
 
     const formData = new FormData(event.currentTarget)
     const response = await signIn("credentials", {
+      role: formData.get("role"),
       password: formData.get("password"),
-      role: role,
       redirect: false,
     })
 
@@ -27,6 +26,7 @@ export default function LoginPage() {
       return
     }
 
+    const role = formData.get("role")
     router.push(role === "uploader" ? "/upload" : "/gallery")
   }
 
@@ -43,16 +43,12 @@ export default function LoginPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Role
-              <select
-                value={role}
-                onChange={(e) =>
-                  setRole(e.target.value as "visitor" | "uploader")
-                }
+              <input
+                type="text"
+                name="role"
+                defaultValue="visitor"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              >
-                <option value="visitor">Visitor</option>
-                <option value="uploader">Uploader</option>
-              </select>
+              />
             </label>
           </div>
           <div>
