@@ -5,9 +5,13 @@
     "strict": true,
     "lib": ["esnext"],
     "esModuleInterop": true,
-    "module": "commonjs",
+    "module": "ES2022",
     "target": "es2019",
-    "moduleResolution": "node"
+    "moduleResolution": "bundler"
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
   },
   "include": ["seed.ts"]
 }

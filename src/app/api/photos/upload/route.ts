@@ -94,6 +94,8 @@ export async function POST(request: NextRequest) {
     const photoData: Prisma.PhotoUncheckedCreateInput = {
       url: result.secure_url,
       thumbnail: thumbnail.secure_url,
+      // userId: session.user.id,
+      //userId: { connect: { id: getUser.id} },
       userId: session.user.id,
     }
 
