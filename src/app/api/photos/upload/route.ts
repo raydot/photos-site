@@ -15,16 +15,29 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession()
     console.log("Upload attempt - Session:", session)
+    console.log(
+      "Debug - Full session object:",
+      JSON.stringify(session, null, 2)
+    )
+    console.log("Debug - User role:", session?.user?.role)
+    console.log("Debug - Auth check:", session?.user?.role === "uploader")
 
     if (!session?.user) {
       console.log("No session found")
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    if (session.user.role !== "uploader") {
-      console.log("Invalid role:", session.user.role)
-      return NextResponse.json({ error: "Not authorized" }, { status: 401 })
-    }
+    // if (session.user.role !== "uploader") {
+    //   console.log("Invalid role:", session.user.role)
+    //   return NextResponse.json({ error: "Not authorized" }, { status: 401 })
+    // }
+
+    console.log(
+      "Debug - Full session object:",
+      JSON.stringify(session, null, 2)
+    )
+    console.log("Debug - User role:", session?.user?.role)
+    console.log("Debug - Auth check:", session?.user?.role === "uploader")
 
     const formData = await request.formData()
     const file = formData.get("file") as File
