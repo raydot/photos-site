@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { v2 as cloudinary } from "cloudinary"
@@ -76,11 +76,31 @@ export async function POST(request: NextRequest) {
       ],
     })
 
+    // const photo = await prisma.photo.create({
+    //   data: {
+    //     url: result.secure_url,
+    //     thumbnail: thumbnail.secure_url,
+    //     userId: session.user.id,
+    //     user: {
+    //       connect: {
+    //         id: session.user.id,
+    //       },
+    //     },
+    //     include: {
+    //       user: true
+    //     }
+    //   },
+    // })
+    const photoData: Prisma.PhotoUncheckedCreateInput = {
+      url: result.secure_url,
+      thumbnail: thumbnail.secure_url,
+      userId: session.user.id,
+    }
+
     const photo = await prisma.photo.create({
-      data: {
-        url: result.secure_url,
-        thumbnail: thumbnail.secure_url,
-        userId: session.user.id,
+      data: photoData,
+      include: {
+        user: true,
       },
     })
 
