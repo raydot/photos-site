@@ -76,21 +76,6 @@ export async function POST(request: NextRequest) {
       ],
     })
 
-    // const photo = await prisma.photo.create({
-    //   data: {
-    //     url: result.secure_url,
-    //     thumbnail: thumbnail.secure_url,
-    //     userId: session.user.id,
-    //     user: {
-    //       connect: {
-    //         id: session.user.id,
-    //       },
-    //     },
-    //     include: {
-    //       user: true
-    //     }
-    //   },
-    // })
     const photoData: Prisma.PhotoUncheckedCreateInput = {
       url: result.secure_url,
       thumbnail: thumbnail.secure_url,
