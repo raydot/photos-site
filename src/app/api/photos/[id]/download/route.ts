@@ -1,31 +1,21 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { NextRequest, NextResponse } from "next/server"
+import { getToken } from "next-auth/jwt"
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-// type Props = {
-//   params: { id: string }
-// }
-
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest) {
   try {
-    // const { params } = await context
-    // const {id} = Props.params
-    const { id } = await params
-    const session = await getServerSession()
+    const url = new URL(request.url)
+    const id = url.pathname.split("/").pop()
+    const token = await getToken({ req: request })
 
-    if (!session?.user) {
+    if (!token?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const photo = await prisma.photo.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
     })
 
     if (!photo) {

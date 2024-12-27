@@ -14,14 +14,6 @@ export default withAuth(
   },
   {
     secret: process.env.NEXTAUTH_SECRET,
-    callbacks: {
-      session: async ({ session, token }) => {
-        if (session?.user) {
-          session.user.id = token.sub // Ensure user ID is in session
-        }
-        return session
-      },
-    },
   }
 )
 

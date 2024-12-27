@@ -30,24 +30,19 @@ const handler = NextAuth({
       },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-    maxAge: 2 * 24 * 60 * 60, // 3 days
-  },
   callbacks: {
-    jwt: async ({ token, user }) => {
-      if (user) token.role = user.role
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+        token.role = user.role
+      }
       return token
-    },
-    session: async ({ session, token }) => {
-      if (session.user) session.user.role = token.role as "visitor" | "uploader"
-      return session
     },
   },
   pages: {
     signIn: "/login",
   },
+  secret: process.env.NEXTAUTH_SECRET,
 })
 
 export { handler as GET, handler as POST }
