@@ -13,13 +13,13 @@ export default function Home() {
   console.log("Home rendering:", { status, mounted, isNavigating })
 
   useEffect(() => {
-    console.log("Home mounted")
+    // console.log("Home mounted")
     setMounted(true)
   }, [])
 
   useEffect(() => {
     if (mounted && status === "authenticated" && !isNavigating) {
-      console.log("Home initiating redirect to gallery")
+      // console.log("Home initiating redirect to gallery")
       setIsNavigating(true)
       try {
         router.push("/gallery")
