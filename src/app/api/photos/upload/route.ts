@@ -17,10 +17,6 @@ export async function POST(request: NextRequest) {
       id: string
       role: string
     }
-    // console.log("Upload attempt - Token:", token)
-    // console.log("Debug - Full token object:", JSON.stringify(token, null, 2))
-    // console.log("Debug - User role:", token?.role)
-    // console.log("Debug - Auth check:", token?.role === "uploader")
 
     if (!token) {
       console.log("No token found")
@@ -53,6 +49,7 @@ export async function POST(request: NextRequest) {
     const base64 = Buffer.from(buffer).toString("base64")
     const dataURI = `data:${file.type};base64,${base64}`
 
+    // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(dataURI, {
       folder: "photos",
       transformation: [
@@ -77,14 +74,11 @@ export async function POST(request: NextRequest) {
 
     const photo = await prisma.photo.create({
       data: photoData,
-      include: {
-        user: true,
-      },
     })
 
     return NextResponse.json(photo)
   } catch (error) {
     console.error("Error uploading photo:", error)
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    return NextResponse.json({ error: "Upload failed, man" }, { status: 500 })
   }
 }
