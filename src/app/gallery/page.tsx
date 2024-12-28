@@ -1,7 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 interface Photo {
@@ -13,18 +12,23 @@ interface Photo {
 export default function GalleryPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
-  const { status } = useSession() // Remove unused session variable
   const router = useRouter()
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    const token = localStorage.getItem("jwtToken")
+
+    if (!token) {
       router.push("/login")
       return
     }
 
     async function fetchPhotos() {
       try {
-        const response = await fetch("/api/photos")
+        const response = await fetch("/api/photos", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
         const data = await response.json()
         setPhotos(data)
       } catch (error) {
@@ -34,13 +38,16 @@ export default function GalleryPage() {
       }
     }
 
-    if (status === "authenticated") {
-      fetchPhotos()
-    }
-  }, [status, router])
+    fetchPhotos()
+  }, [router])
 
   const handleDownload = async (photoId: string) => {
-    const response = await fetch(`/api/photos/${photoId}/download`)
+    const token = localStorage.getItem("jwtToken")
+    const response = await fetch(`/api/photos/${photoId}/download`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")

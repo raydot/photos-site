@@ -1,6 +1,6 @@
 import { PrismaClient, Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getToken } from "next-auth/jwt"
 import { v2 as cloudinary } from "cloudinary"
 
 cloudinary.config({
@@ -13,31 +13,24 @@ const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
-    console.log("Upload attempt - Session:", session)
-    console.log(
-      "Debug - Full session object:",
-      JSON.stringify(session, null, 2)
-    )
-    console.log("Debug - User role:", session?.user?.role)
-    console.log("Debug - Auth check:", session?.user?.role === "uploader")
+    const token = (await getToken({ req: request })) as {
+      id: string
+      role: string
+    }
+    // console.log("Upload attempt - Token:", token)
+    // console.log("Debug - Full token object:", JSON.stringify(token, null, 2))
+    // console.log("Debug - User role:", token?.role)
+    // console.log("Debug - Auth check:", token?.role === "uploader")
 
-    if (!session?.user) {
-      console.log("No session found")
+    if (!token) {
+      console.log("No token found")
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    // if (session.user.role !== "uploader") {
-    //   console.log("Invalid role:", session.user.role)
-    //   return NextResponse.json({ error: "Not authorized" }, { status: 401 })
-    // }
-
-    console.log(
-      "Debug - Full session object:",
-      JSON.stringify(session, null, 2)
-    )
-    console.log("Debug - User role:", session?.user?.role)
-    console.log("Debug - Auth check:", session?.user?.role === "uploader")
+    if (token.role !== "uploader") {
+      console.log("Invalid role:", token.role)
+      return NextResponse.json({ error: "Not authorized" }, { status: 401 })
+    }
 
     const formData = await request.formData()
     const file = formData.get("file") as File
@@ -79,9 +72,7 @@ export async function POST(request: NextRequest) {
     const photoData: Prisma.PhotoUncheckedCreateInput = {
       url: result.secure_url,
       thumbnail: thumbnail.secure_url,
-      // userId: session.user.id,
-      //userId: { connect: { id: getUser.id} },
-      userId: session.user.id,
+      userId: token.id,
     }
 
     const photo = await prisma.photo.create({
@@ -94,6 +85,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(photo)
   } catch (error) {
     console.error("Error uploading photo:", error)
-    return NextResponse.json({ error: "Upload failed, man" }, { status: 500 })
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 })
   }
 }

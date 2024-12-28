@@ -1,3 +1,4 @@
+// filepath: /Users/davekanter/Documents/Dave/Toastmasters/photos-site/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,8 +10,7 @@ datasource db {
 
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  role      String   @default("USER")
-  email     String   @unique
+  role      String   @default("visitor")
   password  String
   photos    Photo[]
 }
