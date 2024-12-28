@@ -1,12 +1,27 @@
-import type { NextConfig } from "next"
-import path from "path"
-
-const nextConfig: NextConfig = {
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "3000",
+        pathname: "/photos/**",
+      },
+    ],
+    unoptimized: process.env.NODE_ENV === "development",
+  },
   reactStrictMode: true,
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      "@": path.resolve(__dirname, "src"),
+  logging: {
+    level: "verbose",
+    fullUrl: true,
+  },
+  // Disable fast refresh during development
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: ["**/node_modules/**", "**/.next/**"],
+      }
     }
     return config
   },

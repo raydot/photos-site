@@ -2,6 +2,7 @@ import { PrismaClient, Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { v2 as cloudinary } from "cloudinary"
+import { ObjectId } from "mongodb"
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -13,10 +14,7 @@ const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
-    const token = (await getToken({ req: request })) as {
-      id: string
-      role: string
-    }
+    const token = await getToken({ req: request })
 
     if (!token) {
       console.log("No token found")
@@ -27,6 +25,9 @@ export async function POST(request: NextRequest) {
       console.log("Invalid role:", token.role)
       return NextResponse.json({ error: "Not authorized" }, { status: 401 })
     }
+
+    // Ensure the userId is a valid ObjectID
+    const userId = new ObjectId(token.id)
 
     const formData = await request.formData()
     const file = formData.get("file") as File
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     const photoData: Prisma.PhotoUncheckedCreateInput = {
       url: result.secure_url,
       thumbnail: thumbnail.secure_url,
-      userId: token.id,
+      userId: userId.toString(),
     }
 
     const photo = await prisma.photo.create({

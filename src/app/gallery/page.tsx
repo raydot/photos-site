@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 
 interface Photo {
   id: string
@@ -13,50 +14,71 @@ export default function GalleryPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken")
-
-    if (!token) {
+    if (status === "unauthenticated") {
       router.push("/login")
       return
     }
 
-    async function fetchPhotos() {
-      try {
-        const response = await fetch("/api/photos", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        const data = await response.json()
-        setPhotos(data)
-      } catch (error) {
-        console.error("Error fetching photos:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
+    if (status === "authenticated") {
+      async function fetchPhotos() {
+        try {
+          const response = await fetch("/api/photos")
+          console.log("Fetch response:", {
+            status: response.status,
+            ok: response.ok,
+          })
 
-    fetchPhotos()
-  }, [router])
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.message || "Failed to fetch")
+          }
+
+          const data = await response.json()
+          setPhotos(data)
+        } catch (error) {
+          console.error("Error fetching photos:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchPhotos()
+    }
+  }, [status, router])
 
   const handleDownload = async (photoId: string) => {
-    const token = localStorage.getItem("jwtToken")
-    const response = await fetch(`/api/photos/${photoId}/download`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `photo-${photoId}.jpg`
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
+    try {
+      // Strip .jpg extension if present
+      const cleanId = photoId.replace(".jpg", "")
+      // Construct API URL with clean ID
+      const response = await fetch(`/api/photos/${cleanId}/download`)
+
+      console.log("Download attempt:", {
+        photoId,
+        cleanId,
+        status: response.status,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Download failed")
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${photoId}.jpg`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Download error:", error)
+    }
   }
 
   if (loading) {

@@ -1,5 +1,12 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { JWT } from "next-auth/jwt"
+
+interface User {
+  id: string
+  name: string
+  role: "visitor" | "uploader"
+}
 
 const handler = NextAuth({
   providers: [
@@ -11,6 +18,8 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.password || !credentials?.role) return null
+
+        console.log("Authorizing credentials:", { role: credentials.role })
 
         if (
           credentials.role === "visitor" &&
@@ -31,18 +40,23 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user: User | null }) {
       if (user) {
-        token.id = user.id
         token.role = user.role
       }
       return token
+    },
+    async session({ session, token }: { session: any; token: JWT }) {
+      if (session?.user) {
+        session.user.role = token.role
+      }
+      return session
     },
   },
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 })
 
 export { handler as GET, handler as POST }

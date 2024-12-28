@@ -1,34 +1,43 @@
 "use client"
 import { useState } from "react"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { status } = useSession()
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setLoading(true)
     setError(null)
 
-    const formData = new FormData(event.currentTarget)
-    const response = await signIn("credentials", {
-      role: formData.get("role"),
-      password: formData.get("password"),
-      redirect: false,
-    })
+    try {
+      const formData = new FormData(event.currentTarget)
+      const role = formData.get("role")
+      const password = formData.get("password")
 
-    if (response?.error) {
-      setError("Invalid password")
+      const response = await signIn("credentials", {
+        role,
+        password,
+        redirect: false,
+      })
+
+      if (!response?.error) {
+        await router.push("/gallery")
+      } else {
+        setError("Invalid password")
+      }
+    } catch (error) {
+      setError("An error occurred")
+    } finally {
       setLoading(false)
-      return
     }
-
-    const role = formData.get("role")
-    router.push(role === "uploader" ? "/upload" : "/gallery")
   }
+
+  // ...existing JSX...
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
