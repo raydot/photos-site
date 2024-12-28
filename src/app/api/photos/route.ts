@@ -21,24 +21,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const photos = await prisma.photo.findMany({
-    where: { userId: token.id },
-    orderBy: { createdAt: "desc" },
-  })
-
-  return NextResponse.json(photos)
-}
-
-export async function POST(request: NextRequest) {
-  const token = (await getToken({ req: request })) as {
-    id: string
-    role: string
-  }
-
-  if (!token?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
   const formData = await request.formData()
   const file = formData.get("file") as File
 
@@ -57,10 +39,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    console.log("Starting file upload...")
+
     const buffer = await file.arrayBuffer()
     const base64 = Buffer.from(buffer).toString("base64")
     const dataURI = `data:${file.type};base64,${base64}`
 
+    console.log("Uploading to Cloudinary...")
     const result = await cloudinary.uploader.upload(dataURI, {
       folder: "photos",
       transformation: [
@@ -69,6 +54,7 @@ export async function POST(request: NextRequest) {
       ],
     })
 
+    console.log("Uploading thumbnail to Cloudinary...")
     const thumbnail = await cloudinary.uploader.upload(dataURI, {
       folder: "thumbnails",
       transformation: [
@@ -77,6 +63,7 @@ export async function POST(request: NextRequest) {
       ],
     })
 
+    console.log("Saving photo metadata to database...")
     const photoData: Prisma.PhotoUncheckedCreateInput = {
       url: result.secure_url,
       thumbnail: thumbnail.secure_url,
@@ -87,6 +74,7 @@ export async function POST(request: NextRequest) {
       data: photoData,
     })
 
+    console.log("Photo uploaded successfully.")
     return NextResponse.json(photo)
   } catch (error) {
     console.error("Error uploading photo:", error)
