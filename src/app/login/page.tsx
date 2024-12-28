@@ -56,6 +56,7 @@ export default function LoginPage() {
                 type="text"
                 name="role"
                 defaultValue="visitor"
+                autoComplete="username"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
               />
             </label>
@@ -73,6 +74,7 @@ export default function LoginPage() {
               type="password"
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              autoComplete="current-password"
             />
           </div>
           <button

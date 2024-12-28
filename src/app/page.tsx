@@ -10,7 +10,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
 
-  console.log("Home rendering:", { status, mounted, isNavigating })
+  // console.log("Home rendering:", { status, mounted, isNavigating })
 
   useEffect(() => {
     // console.log("Home mounted")

@@ -13,13 +13,13 @@ export async function GET(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    const fileId = await Promise.resolve(params.id)
+    const { id } = await params
     const filepath = path.join(
       process.cwd(),
       "public",
       "photos",
       "originals",
-      `${fileId}.jpg`
+      `${id}.jpg`
     )
 
     try {
@@ -31,7 +31,7 @@ export async function GET(
     const file = await fs.readFile(filepath)
     const headers = new Headers()
     headers.set("Content-Type", "image/jpeg")
-    headers.set("Content-Disposition", `attachment; filename="${fileId}.jpg"`)
+    headers.set("Content-Disposition", `attachment; filename="${id}.jpg"`)
 
     return new NextResponse(file, { headers })
   } catch (error) {

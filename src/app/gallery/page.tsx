@@ -26,10 +26,10 @@ export default function GalleryPage() {
       async function fetchPhotos() {
         try {
           const response = await fetch("/api/photos")
-          console.log("Fetch response:", {
-            status: response.status,
-            ok: response.ok,
-          })
+          // console.log("Fetch response:", {
+          //   status: response.status,
+          //   ok: response.ok,
+          // })
 
           if (!response.ok) {
             const error = await response.json()
