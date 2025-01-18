@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { v2 as cloudinary } from "cloudinary"
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const token = await getToken({ req: request })
     if (!token) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return Response.json({ error: "Not authenticated" }, { status: 401 })
     }
 
     const { resources } = await cloudinary.search
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .max_results(500)
       .execute()
 
-    const photos = resources.map((resource) => ({
+    const photos = resources.map((resource: any) => ({
       id: resource.public_id.split("/").pop(),
       url: resource.secure_url,
       thumbnail: cloudinary.url(resource.public_id, {
@@ -33,12 +33,11 @@ export async function GET(request: NextRequest) {
       })
     }))
 
-    return NextResponse.json(photos)
+    return Response.json(photos)
   } catch (error) {
-    // Log error details for debugging in production
     if (error instanceof Error) {
       console.warn("Photos API error:", error.message)
     }
-    return NextResponse.json({ error: "Server error" }, { status: 500 })
+    return Response.json({ error: "Server error" }, { status: 500 })
   }
 }

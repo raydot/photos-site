@@ -4,7 +4,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 
-interface Photo {
+type Photo = {
   id: string
   url: string
   thumbnail: string
@@ -46,26 +46,23 @@ export default function GalleryPage() {
     }
   }, [status, router])
 
-  const handleDownload = async (photoUrl: string) => {
+  const handleDownload = async (url: string, filename: string) => {
     try {
-      const response = await fetch(photoUrl)
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error("Download failed")
       }
 
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const downloadUrl = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
-      a.href = url
-      // Extract filename from URL
-      const filename = photoUrl.split("/").pop() || "photo.jpg"
+      a.href = downloadUrl
       a.download = filename
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
+      window.URL.revokeObjectURL(downloadUrl)
       document.body.removeChild(a)
     } catch (error) {
-      // Log error details for debugging in production
       if (error instanceof Error) {
         console.warn("Download error:", error.message)
       }
@@ -94,7 +91,7 @@ export default function GalleryPage() {
             />
             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
               <button
-                onClick={() => handleDownload(photo.url)}
+                onClick={() => handleDownload(photo.url, `${photo.id}.jpg`)}
                 className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
               >
                 Download
