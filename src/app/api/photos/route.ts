@@ -16,26 +16,29 @@ export async function GET(request: NextRequest) {
     }
 
     const { resources } = await cloudinary.search
-      .expression('folder:photos')
-      .sort_by('created_at', 'desc')
+      .expression("folder:photos")
+      .sort_by("created_at", "desc")
       .max_results(500)
       .execute()
 
-    const photos = resources.map((resource: any) => ({
-      id: resource.public_id.split('/').pop(),
+    const photos = resources.map((resource) => ({
+      id: resource.public_id.split("/").pop(),
       url: resource.secure_url,
       thumbnail: cloudinary.url(resource.public_id, {
         width: 300,
         height: 300,
-        crop: 'fill',
-        quality: 'auto',
-        format: 'jpg'
+        crop: "fill",
+        quality: "auto",
+        format: "jpg"
       })
     }))
 
     return NextResponse.json(photos)
   } catch (error) {
-    console.error("Photos API error:", error)
+    // Log error details for debugging in production
+    if (error instanceof Error) {
+      console.warn("Photos API error:", error.message)
+    }
     return NextResponse.json({ error: "Server error" }, { status: 500 })
   }
 }

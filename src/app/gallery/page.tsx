@@ -14,7 +14,7 @@ export default function GalleryPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const { data: session, status } = useSession()
+  const { status } = useSession()
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -26,11 +26,6 @@ export default function GalleryPage() {
       async function fetchPhotos() {
         try {
           const response = await fetch("/api/photos")
-          // console.log("Fetch response:", {
-          //   status: response.status,
-          //   ok: response.ok,
-          // })
-
           if (!response.ok) {
             const error = await response.json()
             throw new Error(error.message || "Failed to fetch")
@@ -39,7 +34,9 @@ export default function GalleryPage() {
           const data = await response.json()
           setPhotos(data)
         } catch (error) {
-          console.error("Error fetching photos:", error)
+          if (error instanceof Error) {
+            console.warn("Error fetching photos:", error.message)
+          }
         } finally {
           setLoading(false)
         }
@@ -53,22 +50,25 @@ export default function GalleryPage() {
     try {
       const response = await fetch(photoUrl)
       if (!response.ok) {
-        throw new Error('Download failed')
+        throw new Error("Download failed")
       }
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      const a = document.createElement("a")
       a.href = url
       // Extract filename from URL
-      const filename = photoUrl.split('/').pop() || 'photo.jpg'
+      const filename = photoUrl.split("/").pop() || "photo.jpg"
       a.download = filename
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (error) {
-      console.error('Download error:', error)
+      // Log error details for debugging in production
+      if (error instanceof Error) {
+        console.warn("Download error:", error.message)
+      }
     }
   }
 

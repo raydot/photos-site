@@ -1,15 +1,14 @@
 "use client"
 import { useState } from "react"
-import { signIn, useSession } from "next-auth/react"
+import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { status } = useSession()
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event) {
     event.preventDefault()
     setLoading(true)
     setError(null)
@@ -30,14 +29,12 @@ export default function LoginPage() {
       } else {
         setError("Invalid password")
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred")
     } finally {
       setLoading(false)
     }
   }
-
-  // ...existing JSX...
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -50,22 +47,21 @@ export default function LoginPage() {
         )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700">
               Role
-              <input
-                type="text"
-                name="role"
-                defaultValue="visitor"
-                autoComplete="username"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              />
             </label>
+            <select
+              id="role"
+              name="role"
+              required
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              <option value="uploader">Uploader</option>
+              <option value="viewer">Viewer</option>
+            </select>
           </div>
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
@@ -73,8 +69,7 @@ export default function LoginPage() {
               name="password"
               type="password"
               required
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              autoComplete="current-password"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
           </div>
           <button
