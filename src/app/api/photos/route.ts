@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
-import fs from "fs"
-import path from "path"
+import { v2 as cloudinary } from "cloudinary"
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,16 +15,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    const photosDir = path.join(process.cwd(), "public", "photos", "originals")
-    const files = fs
-      .readdirSync(photosDir)
-      .filter((file) => file.match(/^\d{4}-\d{2}-\d{2}_\d{6}_\d{3}\.jpg$/))
-      .sort((a, b) => b.localeCompare(a))
+    const { resources } = await cloudinary.search
+      .expression('folder:photos')
+      .sort_by('created_at', 'desc')
+      .max_results(500)
+      .execute()
 
-    const photos = files.map((file) => ({
-      id: file.replace(".jpg", ""),
-      url: `/photos/originals/${file}`,
-      thumbnail: `/photos/thumbnails/${file}`,
+    const photos = resources.map((resource: any) => ({
+      id: resource.public_id.split('/').pop(),
+      url: resource.secure_url,
+      thumbnail: cloudinary.url(resource.public_id, {
+        width: 300,
+        height: 300,
+        crop: 'fill',
+        quality: 'auto',
+        format: 'jpg'
+      })
     }))
 
     return NextResponse.json(photos)

@@ -1,11 +1,18 @@
-import NextAuth from "next-auth"
+import NextAuth, { DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { JWT } from "next-auth/jwt"
 
-interface User {
-  id: string
-  name: string
-  role: "visitor" | "uploader"
+// interface User {
+//   id: string
+//   name: string
+//   role: "visitor" | "uploader"
+// }
+declare module "next-auth" {
+  interface Session extends DefaultSession {
+    user: {
+      role?: "visitor" | "uploader"
+    } & DefaultSession["user"]
+  }
 }
 
 const handler = NextAuth({
@@ -46,9 +53,9 @@ const handler = NextAuth({
       }
       return token
     },
-    async session({ session, token }: { session: any; token: JWT }) {
+    async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role
+        session.user.role = token.role as "visitor" | "uploader"
       }
       return session
     },

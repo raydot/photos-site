@@ -49,35 +49,26 @@ export default function GalleryPage() {
     }
   }, [status, router])
 
-  const handleDownload = async (photoId: string) => {
+  const handleDownload = async (photoUrl: string) => {
     try {
-      // Strip .jpg extension if present
-      const cleanId = photoId.replace(".jpg", "")
-      // Construct API URL with clean ID
-      const response = await fetch(`/api/photos/${cleanId}/download`)
-
-      console.log("Download attempt:", {
-        photoId,
-        cleanId,
-        status: response.status,
-      })
-
+      const response = await fetch(photoUrl)
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Download failed")
+        throw new Error('Download failed')
       }
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
-      const a = document.createElement("a")
+      const a = document.createElement('a')
       a.href = url
-      a.download = `${photoId}.jpg`
+      // Extract filename from URL
+      const filename = photoUrl.split('/').pop() || 'photo.jpg'
+      a.download = filename
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (error) {
-      console.error("Download error:", error)
+      console.error('Download error:', error)
     }
   }
 
@@ -99,14 +90,16 @@ export default function GalleryPage() {
               alt="Gallery image"
               width={300}
               height={300}
-              className="rounded-lg object-cover w-full aspect-square"
+              className="rounded-lg object-cover w-full h-full"
             />
-            <button
-              onClick={() => handleDownload(photo.id)}
-              className="absolute inset-0 bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-            >
-              Download Original
-            </button>
+            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+              <button
+                onClick={() => handleDownload(photo.url)}
+                className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+              >
+                Download
+              </button>
+            </div>
           </div>
         ))}
       </div>
