@@ -83,3 +83,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Upload failed, man" }, { status: 500 })
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    const token = await getToken({ req: request })
+    if (!token || token.role !== "admin") {
+      return NextResponse.json({ error: "Not authorized" }, { status: 401 })
+    }
+
+    const timestamp = Math.round(new Date().getTime() / 1000)
+
+    // Match all parameters used by the widget
+    const params = {
+      timestamp,
+      folder: "photos",
+      source: "uw"
+    }
+
+    const signature = cloudinary.utils.api_sign_request(
+      params,
+      process.env.CLOUDINARY_API_SECRET || ""
+    )
+
+    return NextResponse.json({
+      signature,
+      timestamp,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY
+    })
+  } catch (error) {
+    console.error("Upload signature error:", error)
+    return NextResponse.json(
+      { error: "Failed to generate upload signature" },
+      { status: 500 }
+    )
+  }
+}

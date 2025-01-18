@@ -1,118 +1,125 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
+import Link from "next/link"
+
+declare global {
+  interface Window {
+    cloudinary: any
+  }
+}
 
 export default function UploadPage() {
-  const [preview, setPreview] = useState<string | null>(null)
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      // Check file size (e.g., 5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("File size must be less than 5MB")
-        return
-      }
-
-      // Check file type
-      if (!file.type.startsWith("image/")) {
-        setError("Please select an image file")
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+  // Redirect if not admin
+  if (status === "unauthenticated" || session?.user?.role !== "admin") {
+    router.push("/login")
+    return null
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setUploading(true)
-    setError(null)
+  useEffect(() => {
+    // Load Cloudinary Upload Widget script
+    const script = document.createElement("script")
+    script.src = "https://upload-widget.cloudinary.com/global/all.js"
+    script.async = true
+    document.body.appendChild(script)
 
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [])
+
+  const handleUpload = async () => {
     try {
-      const formData = new FormData(event.currentTarget)
-      const response = await fetch("/api/photos/upload", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-        headers: {
-          // Add auth related headers if needed
-          Accept: "application/json",
+      setError(null)
+      setUploading(true)
+
+      // Open Cloudinary Upload Widget
+      window.cloudinary.openUploadWidget(
+        {
+          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+          uploadPreset: "photos_unsigned",
+          folder: "photos",
+          sources: ["local", "url", "camera"],
+          multiple: true,
+          maxFiles: 10,
+          cropping: false,
+          showSkipCropButton: false,
+          showPoweredBy: false,
+          styles: {
+            palette: {
+              window: "#FFFFFF",
+              windowBorder: "#90A0B3",
+              tabIcon: "#0078FF",
+              menuIcons: "#5A616A",
+              textDark: "#000000",
+              textLight: "#FFFFFF",
+              link: "#0078FF",
+              action: "#FF620C",
+              inactiveTabIcon: "#0E2F5A",
+              error: "#F44235",
+              inProgress: "#0078FF",
+              complete: "#20B832",
+              sourceBg: "#E4EBF1",
+            },
+          },
         },
-      })
-
-      console.log("Upload response status:", response.status) // Debug response
-      const responseData = await response.json()
-      console.log("Upload response data:", responseData) // Debug response
-
-      if (!response.ok) {
-        // const data = await response.json()
-        // throw new Error(data.error || "Upload failed")
-        console.log("Upload response data:", responseData) // Debug response data
-      }
-
-      router.push("/gallery")
+        (error: any, result: any) => {
+          if (error) {
+            console.error("Upload error:", error)
+            setError("Failed to upload photos")
+          } else if (result.event === "success") {
+            // Refresh the gallery page
+            router.push("/gallery")
+            router.refresh()
+          }
+          setUploading(false)
+        }
+      )
     } catch (error) {
       console.error("Upload error:", error)
       setError(error instanceof Error ? error.message : "Upload failed")
-    } finally {
       setUploading(false)
     }
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-8">
-        <div className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Choose photo
-            <input
-              type="file"
-              name="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="mt-1 block w-full text-sm text-slate-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-violet-50 file:text-violet-700
-                hover:file:bg-violet-100"
-              required
-            />
-          </label>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold text-gray-900">Upload Photos</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Upload photos to the gallery
+          </p>
+          <Link 
+            href="/gallery" 
+            className="mt-4 inline-block text-blue-600 hover:text-blue-800"
+          >
+            View Gallery →
+          </Link>
+        </div>
 
-          {preview && (
-            <div className="relative aspect-video w-full">
-              <Image
-                src={preview}
-                alt="Preview"
-                fill
-                className="rounded-lg object-contain"
-              />
+        <div className="mt-8">
+          {error && (
+            <div className="mb-4 bg-red-50 text-red-500 p-3 rounded-md">
+              {error}
             </div>
           )}
 
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-md">{error}</div>
-          )}
-
           <button
-            type="submit"
-            disabled={uploading || !preview}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50"
+            onClick={handleUpload}
+            disabled={uploading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {uploading ? "Uploading..." : "Upload Photo"}
+            {uploading ? "Opening upload widget..." : "Choose Photos"}
           </button>
         </div>
-      </form>
+      </div>
     </div>
   )
 }

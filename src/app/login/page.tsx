@@ -27,7 +27,8 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/gallery")
+      // Redirect admin to upload page, visitors to gallery
+      router.push(role === "admin" ? "/upload" : "/gallery")
     } catch (error) {
       setError("An error occurred")
     }
