@@ -2,15 +2,10 @@ import NextAuth, { DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { JWT } from "next-auth/jwt"
 
-// interface User {
-//   id: string
-//   name: string
-//   role: "visitor" | "uploader"
-// }
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
-      role?: "visitor" | "uploader"
+      role?: "visitor" | "admin"
     } & DefaultSession["user"]
   }
 }
@@ -36,10 +31,10 @@ const handler = NextAuth({
         }
 
         if (
-          credentials.role === "uploader" &&
-          credentials.password === process.env.UPLOAD_PASSWORD
+          credentials.role === "admin" &&
+          credentials.password === process.env.ADMIN_PASSWORD
         ) {
-          return { id: "2", name: "Uploader", role: "uploader" }
+          return { id: "2", name: "Admin", role: "admin" }
         }
 
         return null
@@ -47,7 +42,7 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user: User | null }) {
+    async jwt({ token, user }: { token: JWT; user: { id: string; name: string; role: "visitor" | "admin" } | null }) {
       if (user) {
         token.role = user.role
       }
@@ -55,7 +50,7 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role as "visitor" | "uploader"
+        session.user.role = token.role as "visitor" | "admin"
       }
       return session
     },
