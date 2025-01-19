@@ -9,15 +9,15 @@ Upload a bunch of pictures to Cloudinary and this app will put them into a websi
 ## Customizations
 
 There was originally admin upload functionality, but it was easier to just upload to Cloudinary
-There is a "Christmas themed word list" that is used to convert the file names into something more readable (and festive).  These can easily be changed to suit any occasion.
-There is "delete" button functionality for images which is not used. 
-Cloudinary handles the creation of image Thumbnails which can be further customized.
-The application was built with Typescript but is was minimally used.
-Type checking is skipped because it was throwing warnings that were just confusing the AI.
+There is a "Christmas themed word list" that is used to convert the file names into something more readable (and festive).  These can easily be changed to suit any occasion
+There is "delete" button functionality for images which is not used 
+Cloudinary handles the creation of image Thumbnails which can be further customized
+The application was built with Typescript but is is minimally used
+Type checking is skipped because it was throwing warnings that were just confusing the AI
 
 ## Other Stuff
 
-Originally the side used a lot more API stoff than was needed.  There are some leftover references to MongoDB and Prisma, both of which were dropped in the final build.
+Originally the site used a lot more API stoff than was needed.  There are some leftover references to MongoDB and Prisma, both of which were dropped in the final build.
 
 ## NEXT BOILERPLATE
 
