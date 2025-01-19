@@ -16,10 +16,8 @@ export default function GalleryPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
   const { data: session } = useSession()
   const router = useRouter()
-  const isAdmin = session?.user?.role === "admin"
 
   useEffect(() => {
     if (!session?.user) {
@@ -79,29 +77,6 @@ export default function GalleryPage() {
     return `${getWord(adjectives)}-${getWord(nouns, 1)}-${getWord(actions, 2)}`
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this photo?")) return
-
-    try {
-      setDeleting(id)
-      const encodedId = encodeURIComponent(id)
-      const response = await fetch(`/api/photos/${encodedId}`, {
-        method: "DELETE",
-        credentials: "include",
-      })
-
-      if (!response.ok) throw new Error("Failed to delete photo")
-
-      // Remove the photo from the state
-      setPhotos(photos.filter(photo => photo.id !== id))
-    } catch (error) {
-      console.error("Delete error:", error)
-      alert("Failed to delete photo")
-    } finally {
-      setDeleting(null)
-    }
-  }
-
   const handleDownload = async (url: string, id: string) => {
     try {
       const response = await fetch(url)
@@ -140,17 +115,6 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {isAdmin && (
-          <div className="mb-8 text-center">
-            <Link
-              href="/upload"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Upload Photos
-            </Link>
-          </div>
-        )}
-        
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {photos.map((photo) => (
             <div key={photo.id} className="relative group">
@@ -188,25 +152,6 @@ export default function GalleryPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
                     </button>
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDelete(photo.id)}
-                        disabled={deleting === photo.id}
-                        className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                        title="Delete photo"
-                      >
-                        {deleting === photo.id ? (
-                          <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
-                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        )}
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
