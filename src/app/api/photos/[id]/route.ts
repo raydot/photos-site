@@ -19,12 +19,20 @@ export async function DELETE(
       return Response.json({ error: "Not authorized" }, { status: 401 })
     }
 
-    // Get the image ID from the URL
+    // Get the image ID from the URL and decode it
     const segments = request.url.split('/')
-    const imageId = segments[segments.length - 1]
+    const encodedId = segments[segments.length - 1]
+    const publicId = decodeURIComponent(encodedId)
+    
+    console.log('Deleting image with public_id:', publicId)
     
     // Delete the image from Cloudinary
-    await cloudinary.uploader.destroy(imageId)
+    const result = await cloudinary.uploader.destroy(publicId)
+    console.log('Delete result:', result)
+
+    if (result.result !== 'ok') {
+      throw new Error(`Failed to delete image: ${result.result}`)
+    }
 
     return Response.json({ success: true })
   } catch (error) {

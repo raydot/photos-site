@@ -12,6 +12,28 @@ cloudinary.config({
 
 const prisma = new PrismaClient()
 
+// Christmas-themed word lists
+const adjectives = [
+  "merry", "jolly", "festive", "snowy", "sparkly", "happy", "cozy", "frosty",
+  "glowing", "twinkling", "magical", "cheerful", "bright", "joyful", "peaceful"
+]
+
+const nouns = [
+  "dasher", "dancer", "prancer", "vixen", "comet", "cupid", "donner", "blitzen",
+  "rudolph", "santa", "elf", "star", "gift", "dreidel", "latke", "menorah", 
+  "gelt", "candle", "bell", "tree", "wreath"
+]
+
+const actions = [
+  "dancer", "singer", "giver", "sharer", "glider", "flier", "smiler",
+  "laugher", "player", "celebrator", "decorator", "sparkler", "twinkler"
+]
+
+function generateFriendlyName(): string {
+  const randomWord = (array: string[]) => array[Math.floor(Math.random() * array.length)]
+  return `${randomWord(adjectives)}-${randomWord(nouns)}-${randomWord(actions)}`
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = await getToken({ req: request })
@@ -46,30 +68,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File too large" }, { status: 400 })
     }
 
-    const buffer = await file.arrayBuffer()
-    const base64 = Buffer.from(buffer).toString("base64")
-    const dataURI = `data:${file.type};base64,${base64}`
+    const friendlyName = generateFriendlyName()
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(dataURI, {
-      folder: "photos",
-      transformation: [
-        { width: 1920, height: 1080, crop: "limit" },
-        { quality: "auto" },
-      ],
+    // Get upload signature from GET endpoint
+    const response = await fetch("/api/photos/upload", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
 
-    const thumbnail = await cloudinary.uploader.upload(dataURI, {
-      folder: "thumbnails",
-      transformation: [
-        { width: 300, height: 300, crop: "fill" },
-        { quality: "auto" },
-      ],
+    if (!response.ok) {
+      console.error("Failed to get upload signature:", response.status)
+      return NextResponse.json({ error: "Failed to get upload signature" }, { status: 500 })
+    }
+
+    const uploadParams = await response.json()
+
+    // Upload to Cloudinary using signed upload
+    const uploadResponse = await fetch(`https://api.cloudinary.com/v1_1/${uploadParams.cloudName}/upload`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `file=${file}&signature=${uploadParams.signature}&timestamp=${uploadParams.timestamp}&api_key=${uploadParams.apiKey}`,
     })
+
+    if (!uploadResponse.ok) {
+      console.error("Failed to upload photo:", uploadResponse.status)
+      return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    }
+
+    const uploadResult = await uploadResponse.json()
 
     const photoData: Prisma.PhotoUncheckedCreateInput = {
-      url: result.secure_url,
-      thumbnail: thumbnail.secure_url,
+      url: uploadResult.secure_url,
+      thumbnail: uploadResult.secure_url,
       userId: userId.toString(),
     }
 
@@ -92,27 +126,29 @@ export async function GET(request: NextRequest) {
     }
 
     const timestamp = Math.round(new Date().getTime() / 1000)
+    const friendlyName = generateFriendlyName()
 
-    // Match all parameters used by the widget
+    // Include friendly name in the upload parameters
     const params = {
       timestamp,
       folder: "photos",
-      source: "uw"
+      context: `friendly_name=${friendlyName}`, // Store friendly name in metadata
+      public_id: friendlyName // Use friendly name as the file name
     }
 
     const signature = cloudinary.utils.api_sign_request(
       params,
-      process.env.CLOUDINARY_API_SECRET || ""
+      process.env.CLOUDINARY_API_SECRET!
     )
 
     return NextResponse.json({
+      ...params,
       signature,
-      timestamp,
+      apiKey: process.env.CLOUDINARY_API_KEY,
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-      apiKey: process.env.CLOUDINARY_API_KEY
     })
   } catch (error) {
-    console.error("Upload signature error:", error)
+    console.error("Upload error:", error)
     return NextResponse.json(
       { error: "Failed to generate upload signature" },
       { status: 500 }
